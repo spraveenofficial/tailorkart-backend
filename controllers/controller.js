@@ -3,10 +3,42 @@ import token from "../services/token-services.js";
 import productModel from "../models/products.js";
 class Controller {
   async signup(req, res) {
+    const regularExpression = new RegExp(
+      "^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$"
+    );
     const { name, email, password } = req.body;
-    if (!name || !email || !password) {
+    if (!name && !email && !password) {
       return res.status(400).json({
         message: "Please fill all the fields",
+        statusCode: 400,
+        success: false,
+      });
+    }
+    if (!email) {
+      return res.status(400).json({
+        message: "Email is required",
+        statusCode: 400,
+        success: false,
+      });
+    }
+    if (!password) {
+      return res.status(400).json({
+        message: "Password is required",
+        statusCode: 400,
+        success: false,
+      });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({
+        message: "Password must be atleast 6 characters long",
+        statusCode: 400,
+        success: false,
+      });
+    }
+    if (!regularExpression.test(password)) {
+      return res.status(400).json({
+        message:
+          "Password must contain atleast one uppercase, lowercase, number and special character",
         statusCode: 400,
         success: false,
       });
@@ -84,7 +116,9 @@ class Controller {
   async categoryWiseProducts(req, res) {
     const { category } = req.params;
     const regex = new RegExp(category, "i");
-    const products = await productModel.find({ category: regex });
+    const products = await productModel.find({
+      category: regex,
+    });
     products.length === 0
       ? res.status(400).json({
           message: "No products found",
@@ -160,7 +194,7 @@ class Controller {
           }
         )
         .exec()
-        .then(async () => {
+        .then(async (result) => {
           const user = await userModel.findById(id);
           return res.json({
             message: "Address added successfully",
